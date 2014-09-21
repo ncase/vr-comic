@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Cardboard Example</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        margin: 0px;
+        overflow: hidden;
+      }
+      #example {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="example"></div>
+    <div id="debug" style="position:absolute;bottom:10px;text-align:center;color:#FFF"></div>
+
+  <script src="js/third-party/threejs/three.min.js"></script>
+  <script src="js/third-party/threejs/StereoEffect.js"></script>
+  <script src="js/third-party/threejs/DeviceOrientationControls.js"></script>
+  <script src="js/third-party/threejs/OrbitControls.js"></script>
+
+  <script>
+
+  var debug = document.getElementById("debug");
+  
+    var camera, scene, renderer;
+    var effect, controls;
+    var element, container;
+    var comic;
+
+    var clock = new THREE.Clock();
+
+    init();
+    animate();
+
+    
+
+    function init() {
+      renderer = new THREE.WebGLRenderer();
+      element = renderer.domElement;
+      container = document.getElementById('example');
+      container.appendChild(element);
+
+      effect = new THREE.StereoEffect(renderer);
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(90, 1, 0.001, 700);
+      camera.position.set(0,0,0);
+      scene.add(camera);
+
+      controls = new THREE.OrbitControls(camera, element);
+      controls.rotateUp(Math.PI / 4);
+      controls.target.set(
+        camera.position.x + 0.1,
+        camera.position.y,
+        camera.position.z
+      );
+      controls.noZoom = true;
+      controls.noPan = true;
+
+      controls = new THREE.DeviceOrientationControls(camera, true);
+      controls.connect();
+      controls.update();
+
+      element.addEventListener('click', fullscreen, false);
+
+        /*window.removeEventListener('deviceorientation', setOrientationControls);
+      }
+      window.addEventListener('deviceorientation', setOrientationControls, true);*/
+
+
+      // CREATE LIGHT
+      var light = new THREE.AmbientLight(0xFFFFFF);
+      scene.add(light);
+
+      // CREATE LIZARD TEXTURE
+      var texture = THREE.ImageUtils.loadTexture(
+        'textures/patterns/lizards.png'
+      );
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat = new THREE.Vector2(50, 50);
+      texture.anisotropy = renderer.getMaxAnisotropy();
+
+      // COMIC MATERIAL
+      var _addComic = function(panel,width,height,angle){
+
+        var geometry = new THREE.PlaneGeometry(width,height);
+        var material = new THREE.MeshLambertMaterial({
+          map: THREE.ImageUtils.loadTexture(panel)
+        });
+
+        var comic = new THREE.Mesh(geometry,material);
+        var radius = 30;
+        comic.position.x = Math.sin(-angle)*radius;
+        comic.position.z = Math.cos(-angle)*radius;
+        comic.rotation.y = -angle + Math.TAU/2;
+        scene.add(comic);
+
+      }
+
+      Math.TAU = Math.PI*2;
+      _addComic('uzumaki/0.jpg',30,30,Math.TAU*(0/6));
+      _addComic('uzumaki/1.jpg',30,30,Math.TAU*(1/6));
+      _addComic('uzumaki/2.jpg',30,30,Math.TAU*(2/6));
+      _addComic('uzumaki/3.jpg',30,30,Math.TAU*(3/6));
+      _addComic('uzumaki/4.jpg',30,30,Math.TAU*(4/6));
+      _addComic('uzumaki/5.jpg',30,30,Math.TAU*(5/6));
+
+      window.addEventListener('resize', resize, false);
+      setTimeout(resize, 1);
+    }
+
+    function resize() {
+      var width = container.offsetWidth;
+      var height = container.offsetHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      effect.setSize(width, height);
+    }
+
+    function update(dt) {
+      resize();
+
+      camera.updateProjectionMatrix();
+
+      debug.innerHTML = camera.rotation.y;
+
+      controls.update(dt);
+    }
+
+    function render(dt) {
+      effect.render(scene, camera);
+    }
+
+    function animate(t) {
+      requestAnimationFrame(animate);
+
+      update(clock.getDelta());
+      render(clock.getDelta());
+    }
+
+    function fullscreen() {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      } else if (container.msRequestFullscreen) {
+        container.msRequestFullscreen();
+      } else if (container.mozRequestFullScreen) {
+        container.mozRequestFullScreen();
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      }
+    }
+  </script>
+  </body>
+</html>
